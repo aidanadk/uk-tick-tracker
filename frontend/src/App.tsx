@@ -1,18 +1,12 @@
-import {useEffect, useState} from 'react';
+import Map from './pages/Map'
 
-function App(){
-  // stores the data to show 
-  const [status, setStatus] = useState('loading...'); 
-  // works once when the page is downloaded
-  useEffect(() => {
-    // requests the data
-    fetch('/api/health')
-      .then((res) => res.json())
-      .then((data) => setStatus(data.status))
-      .catch(()=> setStatus('error: backend not reachable'));
-  }, []);
+function App() {
 
-  return <h1>Backend Status: {status}</h1>
+  return (
+    <>
+      <Map />
+    </>
+  )
 }
 
-export default App;
+export default App
