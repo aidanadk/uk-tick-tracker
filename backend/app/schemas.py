@@ -4,8 +4,6 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
 
 class SightingCreate(BaseModel):
-    """What the form is allowed to send."""
-
     date_seen: date
     species: str = Field(min_length=1, max_length=100)
     location: str = Field(min_length=1, max_length=100)
@@ -38,8 +36,6 @@ class SightingCreate(BaseModel):
         return self
 
 class SightingOut(BaseModel):
-    """What the API sends back."""
-
     model_config = ConfigDict(from_attributes=True)  
 
     id: int
@@ -54,8 +50,9 @@ class SightingOut(BaseModel):
     found_on: str | None
     source: str
     created_at: datetime
+    region: str | None
+    image_url: str | None
 
     @field_serializer("latitude", "longitude")
     def round_coords(self, v: float | None):
-        """Privacy: store exact, expose ~1 km precision."""
         return round(v, 2) if v is not None else None
