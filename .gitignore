@@ -5,3 +5,4 @@ __pycache__/
 *.db
 dist/
 uploads/
+.DS_Store
