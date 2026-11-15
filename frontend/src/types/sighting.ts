@@ -6,4 +6,6 @@ export type Sighting = {
   species: string
   source: 'elanco' | 'user'
   position?: [number, number]
+  region?: string | null
+  imageUrl?: string | null
 }

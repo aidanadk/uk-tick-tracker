@@ -1,97 +1,70 @@
 import type { Sighting } from '../types/sighting'
 
-export type MonthlyTrend = {
+export type Trend = {
   key: string
   label: string
   count: number
 }
 
-export type WeeklyTrend = {
-  key: string
-  label: string
-  count: number
+function addDays(date: Date, days: number) {
+  const result = new Date(date)
+  result.setUTCDate(result.getUTCDate() + days)
+  return result
 }
 
-export function getWeeklyTrends(
-  sightings: Sighting[],
-  now = new Date(),
-): WeeklyTrend[] {
-  const currentMonday = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  )
+function toDateString(date: Date) {
+  return date.toISOString().slice(0, 10)
+}
 
-  const daysSinceMonday = (currentMonday.getUTCDay() + 6) % 7
+export function getWeeklyTrends(sightings: Sighting[], end: Date): Trend[] {
+  let monday = new Date(toDateString(end))
+  while (monday.getUTCDay() !== 1) {
+    monday = addDays(monday, -1)
+  }
 
-  currentMonday.setUTCDate(currentMonday.getUTCDate() - daysSinceMonday)
-
-  const weekMs = 7 * 24 * 60 * 60 * 1000
-  const firstWeekStart = currentMonday.getTime() - 11 * weekMs
-
-  const weeks: WeeklyTrend[] = Array.from({ length: 12 }, (_, index) => {
-    const start = new Date(firstWeekStart + index * weekMs)
-
-    return {
-      key: start.toISOString().slice(0, 10),
+  const weeks: Trend[] = []
+  for (let i = 11; i >= 0; i--) {
+    const start = addDays(monday, -7 * i)
+    weeks.push({
+      key: toDateString(start),
       label: start.toLocaleDateString('en-GB', {
         day: 'numeric',
         month: 'short',
         timeZone: 'UTC',
       }),
       count: 0,
-    }
-  })
+    })
+  }
 
   for (const sighting of sightings) {
-    const timestamp = new Date(sighting.date).getTime()
-
-    if (
-      !Number.isFinite(timestamp) ||
-      timestamp < firstWeekStart ||
-      timestamp > now.getTime()
-    ) {
-      continue
-    }
-
-    const index = Math.floor((timestamp - firstWeekStart) / weekMs)
-
-    if (index >= 0 && index < weeks.length) {
-      weeks[index].count += 1
+    const day = sighting.date.slice(0, 10)
+    for (const week of weeks) {
+      const nextWeek = toDateString(addDays(new Date(week.key), 7))
+      if (day >= week.key && day < nextWeek) {
+        week.count += 1
+      }
     }
   }
 
   return weeks
 }
 
-export function getMonthlyTrends(
-  sightings: Sighting[],
-  now = new Date(),
-): MonthlyTrend[] {
-  const currentYear = now.getUTCFullYear()
-  const currentMonth = now.getUTCMonth()
-
-  const months: MonthlyTrend[] = Array.from({ length: 12 }, (_, index) => {
-    const date = new Date(Date.UTC(currentYear, currentMonth - 11 + index, 1))
-
-    return {
-      key: `${date.getUTCFullYear()}-${date.getUTCMonth()}`,
+export function getMonthlyTrends(sightings: Sighting[], end: Date): Trend[] {
+  const months: Trend[] = []
+  for (let i = 11; i >= 0; i--) {
+    const date = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth() - i, 1))
+    months.push({
+      key: toDateString(date).slice(0, 7),
       label: date.toLocaleDateString('en-GB', {
         month: 'short',
         timeZone: 'UTC',
       }),
       count: 0,
-    }
-  })
+    })
+  }
 
   for (const sighting of sightings) {
-    const date = new Date(sighting.date)
-
-    if (!Number.isFinite(date.getTime()) || date > now) {
-      continue
-    }
-
-    const key = `${date.getUTCFullYear()}-${date.getUTCMonth()}`
-    const month = months.find((month) => month.key === key)
-
+    const month = months.find((m) => m.key === sighting.date.slice(0, 7))
     if (month) {
       month.count += 1
     }
