@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, Integer, String, Text, func
+from sqlalchemy import Date, DateTime, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -23,3 +23,4 @@ class Sighting(Base):
     found_on: Mapped[str | None] = mapped_column(String(20))
     source: Mapped[str] = mapped_column(String(20), default="user") 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    image_url: Mapped[str | None] = mapped_column(String(255))  
