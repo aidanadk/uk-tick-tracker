@@ -4,4 +4,6 @@ export type Sighting = {
   latinName: string
   location: string
   species: string
+  source: 'elanco' | 'user'
+  position?: [number, number]
 }

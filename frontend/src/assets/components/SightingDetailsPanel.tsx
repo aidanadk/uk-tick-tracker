@@ -1,4 +1,9 @@
+import { useState } from 'react'
 import type { Sighting } from '../../types/sighting'
+import {
+  getMonthlyTrends,
+  getWeeklyTrends,
+} from '../../utils/sightingTrends'
 
 type SightingDetailsPanelProps = {
   location: string
@@ -6,17 +11,70 @@ type SightingDetailsPanelProps = {
   onClose: () => void
 }
 
+function formatDate(date: string | Date) {
+  return new Date(date).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
 export default function SightingDetailsPanel({
   location,
   sightings,
   onClose,
 }: SightingDetailsPanelProps) {
+  const [period, setPeriod] = useState<'weekly' | 'monthly'>('monthly')
+
+  const now = new Date()
+
+  // Find the latest valid sighting for this city.
+  const latestTimestamp = sightings.reduce<number | null>(
+    (latest, sighting) => {
+      const timestamp = Date.parse(sighting.date)
+
+      if (!Number.isFinite(timestamp) || timestamp > now.getTime()) {
+        return latest
+      }
+
+      return latest === null ? timestamp : Math.max(latest, timestamp)
+    },
+    null,
+  )
+
+  // Anchor both chart periods to the latest sighting.
+  const chartEnd =
+    latestTimestamp === null ? now : new Date(latestTimestamp)
+
+  const trends =
+    period === 'monthly'
+      ? getMonthlyTrends(sightings, chartEnd)
+      : getWeeklyTrends(sightings, chartEnd)
+
+  const hasActivity = trends.some((item) => item.count > 0)
+  const maxCount = Math.max(2, ...trends.map((item) => item.count))
+  const chartMax = Math.ceil(maxCount / 2) * 2
+
+  const getX = (index: number) =>
+    28 + (index * 304) / Math.max(1, trends.length - 1)
+
+  const getY = (count: number) => 70 - (count / chartMax) * 60
+
+  const chartPoints = trends
+    .map((item, index) => `${getX(index)},${getY(item.count)}`)
+    .join(' ')
+
+  const recentSightings = sightings
+    .filter((sighting) => Number.isFinite(Date.parse(sighting.date)))
+    .sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
+    .slice(0, 7)
+
   return (
     <section className="w-[400px] shrink-0 border-r border-[#D4D4D4] p-[26px]">
-      <div className="flex items-center justify-between">
-        <h2 className="text-title text-[24px] font-bold">
-          {location} sightings
-        </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-title text-[24px] font-bold">{location}</h2>
+
         <button
           type="button"
           onClick={onClose}
@@ -38,40 +96,20 @@ export default function SightingDetailsPanel({
         </button>
       </div>
 
-      <div className="mt-[22px] grid grid-cols-2 gap-[15px] pb-6">
-        <div className="flex min-w-0 flex-col gap-2">
-          <p className="text-text text-[12px]">Species</p>
-          <p className="text-title text-[14px] font-medium">Sheep tick</p>
-        </div>
+      <div className="mt-4 flex flex-col gap-2">
+        <p className="text-title text-[20px] font-bold">
+          {sightings.length}
+          <span className="ml-1 text-[16px] font-medium">
+            {sightings.length === 1 ? 'sighting' : 'sightings'}
+          </span>
+        </p>
 
-        <div className="flex min-w-0 flex-col gap-2">
-          <p className="text-text text-[12px]">Date seen</p>
-          <p className="text-title text-[14px] font-medium">9 Nov 2026</p>
-        </div>
+        <p className="text-text mt-1 text-[12px]">
+          Approximate location, city centre
+        </p>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <p className="text-text text-[12px]">Location</p>
-          <p className="text-title text-[14px] font-medium">{location}</p>
-          <p className="text-text text-[12px]">
-            {sightings.length} sightings · Approximate location, city centre
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <p className="text-text text-[12px]">Reported by</p>
-          <p className="text-title text-[14px] font-medium">Community</p>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <p className="text-text text-[12px]">Notes</p>
-          <p className="text-title text-[14px] font-medium">
-            Found on a dog after a woodland walk. One tick removed.
-          </p>
-        </div>
-      </div>
-
+      {/* Directions and sharing handlers can be added later. */}
       <div className="mt-[22px] flex gap-2 border-b border-[#A6A6A6] pb-6">
         <button
           type="button"
@@ -79,6 +117,7 @@ export default function SightingDetailsPanel({
         >
           Get directions
         </button>
+
         <button
           type="button"
           className="text-title flex-1 rounded-[4px] border border-[#A6A6A6] py-[15px]"
@@ -88,94 +127,135 @@ export default function SightingDetailsPanel({
       </div>
 
       <div className="mt-6">
-        <h2 className="text-text text-[20px] font-bold">
+        <h3 className="text-text text-[20px] font-bold">
           Activity in this area
-        </h2>
+        </h3>
 
         <div className="mt-2 flex gap-2">
-          <button
-            type="button"
-            className="text-title flex-1 rounded-[4px] border border-[#A6A6A6] py-[15px]"
-          >
-            Weekly
-          </button>
-          <button
-            type="button"
-            className="flex-1 rounded-[4px] border border-[#383838] bg-[#383838] py-[15px] text-white"
-          >
-            Monthly
-          </button>
+          {(['weekly', 'monthly'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setPeriod(option)}
+              aria-pressed={period === option}
+              className={`flex-1 rounded-[4px] border py-[15px] ${
+                period === option
+                  ? 'border-[#383838] bg-[#383838] text-white'
+                  : 'text-title border-[#A6A6A6]'
+              }`}
+            >
+              {option === 'weekly' ? 'Weekly' : 'Monthly'}
+            </button>
+          ))}
         </div>
 
         <div className="mt-5 border-b border-[#D4D4D4] pb-6">
           <p className="text-text text-[12px]">
-            Sightings per month · last 12 months
+            {period === 'monthly'
+              ? 'Sightings per month · 12 calendar months'
+              : 'Sightings per week · 12 calendar weeks'}
           </p>
 
+          <p className="text-text mt-1 text-[11px]">
+            {latestTimestamp === null
+              ? 'No valid, non-future sightings available'
+              : `Period ending with latest sighting: ${formatDate(chartEnd)}`}
+          </p>
+
+          {latestTimestamp !== null && (
+            <p className="text-text mt-1 text-[11px]">
+              {period === 'monthly'
+                ? 'Final month includes records through this date'
+                : 'Weeks start Monday · final week includes records through this date'}
+            </p>
+          )}
+
           <svg
-            viewBox="0 0 340 100"
-            className="mt-3 w-full"
+            viewBox="0 0 340 110"
+            className="mt-3 block w-full"
             role="img"
-            aria-label="Sample monthly sightings over the last twelve months"
+            aria-label={`${period} sightings in ${location}`}
           >
-            {[0, 10, 20].map((value) => {
-              const y = 70 - value * 3
+            <title>
+              {period === 'monthly' ? 'Monthly' : 'Weekly'} sightings in{' '}
+              {location}
+            </title>
 
-              return (
-                <g key={value}>
-                  <text x="0" y={y + 3} fontSize="10" fill="#666666">
-                    {value}
-                  </text>
-                  <line
-                    x1="28"
-                    y1={y}
-                    x2="332"
-                    y2={y}
-                    stroke="#D4D4D4"
-                    strokeWidth="1"
-                  />
-                </g>
-              )
-            })}
+            <desc>
+              {latestTimestamp === null
+                ? 'No valid, non-future sightings available.'
+                : `Period ending ${formatDate(chartEnd)}. ${trends
+                    .map((item) => `${item.label}: ${item.count} sightings`)
+                    .join(', ')}`}
+            </desc>
 
+            {/* Horizontal grid lines and counts */}
+            {[0, chartMax / 2, chartMax].map((value) => (
+              <g key={value}>
+                <text
+                  x="0"
+                  y={getY(value) + 3}
+                  fontSize="9"
+                  fill="#666666"
+                >
+                  {value}
+                </text>
+
+                <line
+                  x1="28"
+                  y1={getY(value)}
+                  x2="332"
+                  y2={getY(value)}
+                  stroke="#D4D4D4"
+                />
+              </g>
+            ))}
+
+            {/* Activity line */}
             <polyline
-              points={[3, 2, 4, 7, 12, 17, 14, 18, 11, 8, 6, 4]
-                .map((value, index) => {
-                  const x = 28 + (index * 304) / 11
-                  const y = 70 - value * 3
-                  return `${x},${y}`
-                })
-                .join(' ')}
+              points={chartPoints}
               fill="none"
               stroke="#484848"
               strokeWidth="2"
               strokeLinejoin="round"
+              strokeLinecap="round"
             />
 
-            {['D', 'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N'].map(
-              (month, index) => (
+            {/* Month or week labels */}
+            {trends.map((item, index) => {
+              if (period === 'weekly' && index % 2 !== 0) {
+                return null
+              }
+
+              return (
                 <text
-                  key={index}
-                  x={28 + (index * 304) / 11}
+                  key={item.key}
+                  x={getX(index)}
                   y="92"
                   textAnchor="middle"
-                  fontSize="10"
+                  fontSize="8"
                   fill="#666666"
                 >
-                  {month}
+                  {item.label}
                 </text>
-              ),
-            )}
+              )
+            })}
           </svg>
+
+          {!hasActivity && (
+            <p className="text-text mt-2 text-center text-[12px]">
+              No sightings recorded during this period.
+            </p>
+          )}
         </div>
 
         <div className="mt-5">
           <h3 className="text-title text-[18px] font-bold">
-            Sightings in {location}
+            Recent sightings in {location}
           </h3>
 
           <ul className="mt-2 divide-y divide-[#D4D4D4]">
-            {sightings.map((sighting) => (
+            {recentSightings.map((sighting) => (
               <li
                 key={sighting.id}
                 className="flex items-center justify-between gap-3 py-3"
@@ -184,16 +264,27 @@ export default function SightingDetailsPanel({
                   {sighting.species || 'Unknown species'}
                 </span>
 
-                <span className="text-text text-[12px]">{sighting.date}</span>
+                <time
+                  dateTime={sighting.date}
+                  className="text-text whitespace-nowrap text-[12px]"
+                >
+                  {formatDate(sighting.date)}
+                </time>
               </li>
             ))}
           </ul>
+
+          {recentSightings.length === 0 && (
+            <p className="text-text mt-3 text-[13px]">
+              No sightings with valid dates available.
+            </p>
+          )}
 
           <a
             href="/learn"
             className="text-title mt-4 inline-block text-[14px] underline underline-offset-4"
           >
-            How to identify this species →
+            Learn how to identify ticks →
           </a>
         </div>
       </div>

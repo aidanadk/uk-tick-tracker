@@ -1,10 +1,10 @@
-import Map from './pages/Map'
+import MapPage from './pages/Map'
 
 function App() {
 
   return (
     <>
-      <Map />
+      <MapPage />
     </>
   )
 }
