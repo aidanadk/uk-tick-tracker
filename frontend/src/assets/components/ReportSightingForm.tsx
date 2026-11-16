@@ -176,7 +176,7 @@ export default function ReportSightingForm() {
 
         {species === 'Not sure' && (
           <p className="text-title mt-3 rounded-[4px] border border-[#A6A6A6] bg-[#F2F2F2] p-3 text-sm">
-            Not sure? Your report will be marked as unverified.
+            Not sure? That’s fine. Your report will be saved with the species “Not sure”.
           </p>
         )}
       </div>
