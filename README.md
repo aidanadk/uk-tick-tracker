@@ -1,6 +1,7 @@
 # UK Tick Tracker
 
 **Author:** Aidana Dokturbek Kyzy
+
 **Video walkthrough:** https://youtu.be/Frvs8yLeYcE
 
 I built this project for the Elanco Placement Programme technical task. It lets users explore tick sightings across the UK, learn about different species and report a sighting themselves.
