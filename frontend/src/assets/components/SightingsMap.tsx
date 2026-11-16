@@ -2,24 +2,17 @@ import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { cityCoordinates } from '../../data/ukLocations'
 import type { Sighting } from '../../types/sighting'
-import ReportLocationPicker from './ReportLocationPicker'
 
 type SightingsMapProps = {
   sightings: Sighting[]
   selectedLocation: string | null
   onLocationSelect: (location: string) => void
-  isReporting: boolean
-  reportPosition: [number, number] | null
-  onReportPositionSelect: (position: [number, number]) => void
 }
 
 export default function SightingsMap({
   sightings,
   selectedLocation,
   onLocationSelect,
-  isReporting,
-  reportPosition,
-  onReportPositionSelect,
 }: SightingsMapProps) {
   const locationCounts: Record<string, number> = {}
   const fallbackPositions: Record<string, [number, number]> = {}
@@ -77,7 +70,6 @@ export default function SightingsMap({
             key={marker.location}
             center={marker.position}
             radius={isSelected ? 22 : 18}
-            interactive={!isReporting}
             eventHandlers={{
               click: () => onLocationSelect(marker.location),
             }}
@@ -106,12 +98,6 @@ export default function SightingsMap({
           </CircleMarker>
         )
       })}
-      {isReporting && (
-        <ReportLocationPicker
-          position={reportPosition}
-          onPositionSelect={onReportPositionSelect}
-        />
-      )}
     </MapContainer>
   )
 }

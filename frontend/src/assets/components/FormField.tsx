@@ -19,13 +19,13 @@ export default function FormField({
     <div>
       <label
         htmlFor={id}
-        className="text-title block text-[14px] font-semibold"
+        className="text-title block text-base font-semibold"
       >
         {label}
       </label>
 
       {hint && (
-        <p id={`${id}-hint`} className="text-text mt-1 text-[12px]">
+        <p id={`${id}-hint`} className="text-text mt-1 text-sm">
           {hint}
         </p>
       )}
@@ -35,7 +35,7 @@ export default function FormField({
       {error && (
         <p
           id={`${id}-error`}
-          className="mt-2 text-[12px] font-medium text-red-700"
+          className="mt-2 text-sm font-medium text-red-700"
         >
           {error}
         </p>

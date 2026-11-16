@@ -43,7 +43,6 @@ export default function Sidebar({
     const end = new Date()
     const start = new Date(end)
 
-    // Include today: last 7 days = today and the previous 6 days.
     start.setDate(start.getDate() - (days - 1))
 
     onFiltersChange({
@@ -75,13 +74,12 @@ export default function Sidebar({
 
   return (
     <section className="w-[356px] shrink-0 border-r border-[#D4D4D4] p-[26px]">
-      <h2 className="text-title text-[24px] font-bold">
+      <h2 className="text-title text-2xl font-bold">
         Filters
       </h2>
 
-      {/* Date range */}
       <div className="mt-[22px] border-b border-[#D4D4D4] pb-6">
-        <h3 className="text-title text-[14px] font-bold">
+        <h3 className="text-title text-base font-bold">
           Date range
         </h3>
 
@@ -89,7 +87,7 @@ export default function Sidebar({
           <div className="flex min-w-0 flex-col gap-2">
             <label
               htmlFor="date-from"
-              className="text-text text-[14px] font-medium"
+              className="text-text text-base font-medium"
             >
               From
             </label>
@@ -112,7 +110,7 @@ export default function Sidebar({
           <div className="flex min-w-0 flex-col gap-2">
             <label
               htmlFor="date-to"
-              className="text-text text-[14px] font-medium"
+              className="text-text text-base font-medium"
             >
               To
             </label>
@@ -137,7 +135,7 @@ export default function Sidebar({
           <p
             id="date-range-error"
             role="alert"
-            className="mt-2 text-[12px] text-red-700"
+            className="mt-2 text-sm text-red-700"
           >
             The end date must be on or after the start date.
           </p>
@@ -170,11 +168,10 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Species */}
       <div className="mt-[22px] border-b border-[#D4D4D4] pb-6">
         <label
           htmlFor="species"
-          className="text-title block text-[14px] font-bold"
+          className="text-title block text-base font-bold"
         >
           Species
         </label>
@@ -197,21 +194,20 @@ export default function Sidebar({
           ))}
         </select>
 
-        <p className="text-text mt-3 text-[12px]">
+        <p className="text-text mt-3 text-sm">
           Select a species or show all.
         </p>
       </div>
 
-      {/* Location */}
       <div className="mt-[22px] flex flex-col gap-3 border-b border-[#D4D4D4] pb-6">
         <label
           htmlFor="location-search"
-          className="text-title text-[14px] font-bold"
+          className="text-title text-base font-bold"
         >
           Location
         </label>
 
-        <p id="location-search-hint" className="text-text text-[12px]">
+        <p id="location-search-hint" className="text-text text-sm">
           Search by town or city name.
         </p>
 
@@ -236,14 +232,13 @@ export default function Sidebar({
         </button>
       </div>
 
-      {/* Results */}
       <div className="mt-[22px] pb-6" role="status">
-        <p className="text-title text-[14px] font-bold">
+        <p className="text-title text-base font-bold">
           Showing {resultCount.toLocaleString('en-GB')}{' '}
           {resultCount === 1 ? 'sighting' : 'sightings'}
         </p>
 
-        <p className="text-text mt-1 text-[12px]">
+        <p className="text-text mt-1 text-sm">
           {resultCount === 0
             ? 'Try changing or resetting your filters.'
             : 'Filters apply to the map and city details.'}
